@@ -8,11 +8,11 @@ An interactive dashboard built with Python and Streamlit to explore *where*, *wh
 
 ## Why Dallas–Fort Worth?
 
-If you've ever driven through Dallas, you've probably questioned a few people's driving decisions. Between rush-hour traffic and highways like I-635 that sometimes feel like a competitive sport, driving around DFW can be quite the experience.
+If you've ever driven around Dallas, you know how crazy the roads can get. Between rush-hour traffic, questionable drivers, and whatever's going on with I-635, driving around DFW is an experience of its own.
 
-I figured instead of just complaining about the traffic, why not analyze the data behind it?
+So instead of just complaining about how bad the traffic is, I got curious about where crashes actually happen and what causes them.
 
-That's how DFW Crash Map started.
+That's what led me to create DFW Crash Map.
 
 ## Dashboard preview
 
