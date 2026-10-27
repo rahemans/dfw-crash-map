@@ -6,19 +6,27 @@ An interactive dashboard built with Python and Streamlit to explore *where*, *wh
 
 **[Explore the live dashboard](https://dfw-crash-map-ujqh4w6674qx5pszdlthdb.streamlit.app/)** · [View the source code](https://github.com/rahemans/dfw-crash-map)
 
+## Why Dallas–Fort Worth?
+
+If you've ever driven through Dallas, you've probably questioned a few people's driving decisions. Between rush-hour traffic and highways like I-635 that sometimes feel like a competitive sport, driving around DFW can be quite the experience.
+
+I figured instead of just complaining about the traffic, why not analyze the data behind it?
+
+That's how DFW Crash Map started.
+
 ## Dashboard preview
 
 ### Crash hotspot map
 
 Visualize geographic concentrations of reported crashes in Dallas and Fort Worth. Switch between a heatmap and individual crash locations, and filter by city, year, weather, road type, or time of day.
 
-![DFW Crash Map interactive hotspot dashboard](assets/crash-heatmap.png)
+![DFW Crash Map interactive hotspot dashboard](assets/heatmap.png)
 
-### Crash trends
+### Individual crash locations
 
-Compare monthly trends, explore the busiest crash hours, and examine patterns across days of the week.
+Explore geocoded crash records across Dallas and Fort Worth, with filters to narrow the view.
 
-![DFW Crash Map monthly and hourly crash charts](assets/crash-trends.png)
+![DFW Crash Map individual crash locations](assets/individual-crashes.png)
 
 ## Features
 
