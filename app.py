@@ -79,12 +79,16 @@ h1 {font-size: 2.3rem !important; padding: 0 0 .1rem 0 !important; margin: 0 !im
 h3 {font-size: 1.25rem !important; padding: .2rem 0 .4rem 0 !important;}
 [data-testid="stMetric"] {padding: .5rem .8rem; border: 1px solid rgba(150,160,175,.25); border-radius: 5px;}
 [data-testid="stMetricValue"] {font-size: 1.5rem; letter-spacing: -.035em;}
-.stat {padding: .5rem 0; border-top: 1px solid rgba(150,160,175,.25);}
-.stat-label, .stat-note {font-size: .8rem; opacity: .7; line-height: 1.35;}
-.stat-value {font-size: 1.05rem; font-weight: 650; line-height: 1.3;}
+.facts {margin-top: .5rem;}
+.stat {padding: .85rem 0 .8rem; border-top: 1px solid rgba(150,160,175,.22);}
+.stat-label {font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; opacity: .6; margin-bottom: .3rem;}
+.stat-value {font-size: 1.3rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; margin-bottom: .25rem;}
+.stat-note {font-size: .82rem; opacity: .65; line-height: 1.35;}
+.facts-note {font-size: .8rem; opacity: .6; line-height: 1.45; padding-top: .8rem; border-top: 1px solid rgba(150,160,175,.22);}
 hr {margin: .9rem 0 !important;}
 /* Compact sidebar: shrink the empty header strip and the gaps between groups. */
-/* Collapse button: moved from the top strip to the sidebar's bottom corner (always visible). */
+/* Sidebar arrows live in the bottom corners instead of a top strip.
+   Collapse arrow: bottom-right of the open sidebar. Expand arrow: bottom-left of the page. */
 [data-testid="stSidebar"] {position: relative;}
 [data-testid="stSidebarHeader"] {
     position: absolute !important; top: auto !important; left: auto !important;
@@ -94,15 +98,23 @@ hr {margin: .9rem 0 !important;}
     display: flex !important; align-items: center !important; justify-content: center !important;
     border-radius: .5rem; background: rgba(150,160,175,.18); backdrop-filter: blur(4px);
 }
-[data-testid="stSidebarCollapseButton"], [data-testid="stSidebarCollapseButton"] button {
+[data-testid="stSidebarCollapseButton"] {
+    margin: 0 !important; width: 100%; height: 100%;
+    display: flex !important; align-items: center; justify-content: center;
+}
+[data-testid="stSidebarCollapseButton"] button, button[data-testid="stExpandSidebarButton"] {
+    margin: 0 !important; padding: 0 !important; width: 100%; height: 100%;
+    display: flex !important; align-items: center; justify-content: center;
     opacity: 1 !important; visibility: visible !important;
+}
+button[data-testid="stExpandSidebarButton"] {
+    position: fixed !important; top: auto !important; left: .5rem !important; bottom: .5rem !important;
+    width: 2.6rem !important; height: 2.6rem !important; z-index: 1000 !important;
+    border-radius: .5rem; background: rgba(150,160,175,.18); backdrop-filter: blur(4px);
 }
 [data-testid="stSidebarUserContent"] {padding-top: .9rem; padding-bottom: 3.4rem;}
 [data-testid="stSidebar"] hr {margin: .55rem 0 !important;}
 [data-testid="stSidebar"] h3 {font-size: 1.05rem !important; padding: 0 0 .2rem 0 !important;}
-.sidebar-brand {margin: 0 0 .6rem 0; padding: 0;}
-.sidebar-brand-title {font-size: 1.22rem; font-weight: 700; letter-spacing: -.025em; line-height: 1.3;}
-.sidebar-brand-subtitle {font-size: .89rem; opacity: .65; margin-top: .25rem; line-height: 1.4;}
 /* Make tabs obvious: larger, bold, boxed. */
 [data-baseweb="tab-list"] {gap: .5rem;}
 button[data-baseweb="tab"] {height: auto; padding: .6rem 1.1rem; border-radius: 6px 6px 0 0; background: rgba(150,160,175,.12);}
@@ -476,13 +488,6 @@ first_dates, last_dates, complete_years = compute_year_bounds(df)
 # Sidebar filters
 # --------------------------------------------------
 with st.sidebar:
-    st.markdown(
-        """<div class="sidebar-brand">
-          <div class="sidebar-brand-title">DFW Crash Map</div>
-          <div class="sidebar-brand-subtitle">Dallas · Fort Worth, Texas</div>
-        </div>""",
-        unsafe_allow_html=True,
-    )
     st.subheader("Filters")
     st.selectbox("City", CITY_CHOICES, key="city")
     selected_year = st.selectbox("Crash year", years, key="year")
@@ -699,15 +704,17 @@ with stats_col:
         ("Highest-count roadway", top_road, f"{top_road_count:,} crashes"),
     ]
     st.markdown(
-        "".join(
+        '<div class="facts">'
+        + "".join(
             f'<div class="stat"><div class="stat-label">{html.escape(label)}</div>'
             f'<div class="stat-value">{html.escape(str(value))}</div>'
             f'<div class="stat-note">{html.escape(note)}</div></div>'
             for label, value, note in facts
-        ),
+        )
+        + '<div class="facts-note">Counts of reported crashes, not risk: they don\'t account for '
+          'traffic volume or road length.</div></div>',
         unsafe_allow_html=True,
     )
-    st.caption("Counts of reported crashes, not risk: they don't account for traffic volume or road length.")
 
 SECTION_NAMES = (["Dallas vs. Fort Worth"] if city_choice == BOTH_LABEL else []) + [
     "When crashes happen", "Streets & road types", "Year comparison",
