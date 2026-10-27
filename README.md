@@ -18,15 +18,15 @@ That's how DFW Crash Map started.
 
 ### Crash hotspot map
 
-Visualize geographic concentrations of reported crashes in Dallas and Fort Worth. Switch between a heatmap and individual crash locations, and filter by city, year, weather, road type, or time of day.
+Visualize geographic concentrations of reported crashes across Dallas and Fort Worth.
 
-![DFW Crash Map interactive hotspot dashboard](assets/heatmap.png)
+![DFW Crash Map — Interactive Heatmap](assets/crash-heatmap.png)
 
-### Individual crash locations
+### Crash trends
 
-Explore geocoded crash records across Dallas and Fort Worth, with filters to narrow the view.
+Explore monthly trends, hourly patterns, and weekday crash statistics.
 
-![DFW Crash Map individual crash locations](assets/individual-crashes.png)
+![DFW Crash Map — Crash Trends](assets/crash-trends.png)
 
 ## Features
 
