@@ -674,7 +674,7 @@ def render_map(data, city, year, weather, roads, periods):
     map_style = right.segmented_control(
         "Map visualization", ["Hotspot Heatmap", "Individual Crashes"],
         format_func=lambda v: {"Hotspot Heatmap": "Heatmap", "Individual Crashes": "Points"}[v],
-        default="Hotspot Heatmap", key="map_style",
+        default="Individual Crashes", key="map_style",
         help="Heatmap shows concentration; Points shows individual crashes colored by severity.",
     )
 
