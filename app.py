@@ -648,7 +648,7 @@ def render_map(data, city, year, weather, roads, periods):
                           help="Which crashes to show on the map: all, injury crashes, or fatal crashes.")
     map_style = right.radio("Map visualization", ["Hotspot Heatmap", "Individual Crashes"],
                             format_func=lambda v: {"Hotspot Heatmap": "Heatmap", "Individual Crashes": "Points"}[v],
-                            horizontal=True, label_visibility="collapsed", key="map_style",
+                            horizontal=True, label_visibility="collapsed", index=1, key="map_style",
                             help="Heatmap shows concentration; Points shows individual crashes colored by severity.")
 
     result = build_map(data, city, year, weather, roads, periods, severity, map_style)
