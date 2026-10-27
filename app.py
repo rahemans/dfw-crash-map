@@ -77,8 +77,21 @@ st.markdown(
 h1, h2, h3 {letter-spacing: -.035em; font-weight: 620;}
 h1 {font-size: 2.3rem !important; padding: 0 0 .1rem 0 !important; margin: 0 !important;}
 h3 {font-size: 1.25rem !important; padding: .2rem 0 .4rem 0 !important;}
-[data-testid="stMetric"] {padding: .5rem .8rem; border: 1px solid rgba(150,160,175,.25); border-radius: 5px;}
-[data-testid="stMetricValue"] {font-size: 1.5rem; letter-spacing: -.035em;}
+[data-testid="stMetric"] {
+    min-height: 128px;
+    box-sizing: border-box;
+    padding: 1.35rem 1.1rem;
+    border: 1px solid rgba(150,160,175,.25);
+    border-radius: 7px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+/* Larger KPI typography to use the card area, without increasing card height. */
+[data-testid="stMetricLabel"] p,
+[data-testid="stMetricLabel"] {font-size: 1.12rem !important; font-weight: 550 !important; line-height: 1.4 !important;}
+[data-testid="stMetricValue"],
+[data-testid="stMetricValue"] > div {font-size: 2.05rem !important; font-weight: 700 !important; letter-spacing: -.035em; line-height: 1.2 !important;}
 .facts {margin-top: .5rem;}
 .stat {padding: .85rem 0 .8rem; border-top: 1px solid rgba(150,160,175,.22);}
 .stat-label {font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; opacity: .6; margin-bottom: .3rem;}
@@ -113,8 +126,17 @@ button[data-testid="stExpandSidebarButton"] {
     border-radius: .5rem; background: rgba(150,160,175,.18); backdrop-filter: blur(4px);
 }
 [data-testid="stSidebarUserContent"] {padding-top: .9rem; padding-bottom: 3.4rem;}
-[data-testid="stSidebar"] hr {margin: .55rem 0 !important;}
-[data-testid="stSidebar"] h3 {font-size: 1.05rem !important; padding: 0 0 .2rem 0 !important;}
+[data-testid="stSidebar"] hr {margin: .85rem 0 1rem !important;}
+[data-testid="stSidebar"] h3 {font-size: 1.35rem !important; padding: 0 0 .2rem 0 !important;}
+/* Slightly larger sidebar filter labels and selected values. */
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+[data-testid="stSidebar"] label p {font-size: 1.25rem !important; font-weight: 600 !important; line-height: 1.45 !important;}
+[data-testid="stSidebar"] [data-baseweb="select"] {font-size: 1.17rem !important;}
+[data-testid="stSidebar"] [data-baseweb="select"] span,
+[data-testid="stSidebar"] [data-baseweb="select"] div {font-size: 1.17rem !important;}
+[data-testid="stSidebar"] [data-testid="stRadio"] p {font-size: 1.12rem !important;}
+[data-testid="stSidebar"] button[kind="secondary"] p {font-size: 1.12rem !important;}
+[data-testid="stSidebar"] [data-baseweb="select"] * {font-size: inherit;}
 /* Make tabs obvious: larger, bold, boxed. */
 [data-baseweb="tab-list"] {gap: .5rem;}
 button[data-baseweb="tab"] {height: auto; padding: .6rem 1.1rem; border-radius: 6px 6px 0 0; background: rgba(150,160,175,.12);}
@@ -489,6 +511,7 @@ first_dates, last_dates, complete_years = compute_year_bounds(df)
 # --------------------------------------------------
 with st.sidebar:
     st.subheader("Filters")
+    st.divider()
     st.selectbox("City", CITY_CHOICES, key="city")
     selected_year = st.selectbox("Crash year", years, key="year")
 
@@ -642,14 +665,18 @@ def build_map(_data, city, year, weather, roads, periods, severity, map_style):
 def render_map(data, city, year, weather, roads, periods):
     """Runs as a fragment: changing the map options reruns only this function, not the whole page."""
     left, right = st.columns([3, 2])
-    severity = left.radio("Show crashes", ["All Crashes", "Injury Crashes", "Fatal Crashes"],
-                          format_func=lambda v: v.replace(" Crashes", ""), horizontal=True,
-                          label_visibility="collapsed", key="map_severity",
-                          help="Which crashes to show on the map: all, injury crashes, or fatal crashes.")
-    map_style = right.radio("Map visualization", ["Hotspot Heatmap", "Individual Crashes"],
-                            format_func=lambda v: {"Hotspot Heatmap": "Heatmap", "Individual Crashes": "Points"}[v],
-                            horizontal=True, label_visibility="collapsed", index=1, key="map_style",
-                            help="Heatmap shows concentration; Points shows individual crashes colored by severity.")
+    severity = left.segmented_control(
+        "Show crashes", ["All Crashes", "Injury Crashes", "Fatal Crashes"],
+        format_func=lambda v: v.replace(" Crashes", ""),
+        default="All Crashes", key="map_severity",
+        help="Choose all, injury, or fatal crashes to display.",
+    )
+    map_style = right.segmented_control(
+        "Map visualization", ["Hotspot Heatmap", "Individual Crashes"],
+        format_func=lambda v: {"Hotspot Heatmap": "Heatmap", "Individual Crashes": "Points"}[v],
+        default="Individual Crashes", key="map_style",
+        help="Heatmap shows concentration; Points shows individual crashes colored by severity.",
+    )
 
     result = build_map(data, city, year, weather, roads, periods, severity, map_style)
     if result is None:
@@ -694,27 +721,33 @@ map_col, stats_col = st.columns([3, 1], gap="medium")
 with map_col:
     render_map(df, city_choice, selected_year, weather, roads, periods)
 with stats_col:
+    # Space the four KPI cards vertically alongside the map.
+    # Streamlit adds its own element gaps; these smaller spacers work with
+    # the taller KPI cards to fill the map height without overshooting.
     st.metric("Reported crashes", f"{len(filtered):,}")
+    st.markdown('<div style="height: 9px"></div>', unsafe_allow_html=True)
     st.metric("Crashes with injuries", f"{int(filtered['Injury Crash'].sum()):,}")
+    st.markdown('<div style="height: 9px"></div>', unsafe_allow_html=True)
     st.metric("Fatal crashes", f"{int(filtered['Fatal Crash'].sum()):,}")
+    st.markdown('<div style="height: 9px"></div>', unsafe_allow_html=True)
     st.metric("Injury crash share", f"{filtered['Injury Crash'].mean() * 100:.1f}%")
-    facts = [
-        ("Peak crash hour", peak_text, f"{peak_count:,} crashes at this hour"),
-        ("Busiest weekday", weekday_text, weekday_note),
-        ("Highest-count roadway", top_road, f"{top_road_count:,} crashes"),
-    ]
-    st.markdown(
-        '<div class="facts">'
-        + "".join(
-            f'<div class="stat"><div class="stat-label">{html.escape(label)}</div>'
-            f'<div class="stat-value">{html.escape(str(value))}</div>'
-            f'<div class="stat-note">{html.escape(note)}</div></div>'
-            for label, value, note in facts
+# Place quick insights in a compact row beneath the map and KPI cards.
+# This fills the previously empty area under the map without stretching it.
+facts = [
+    ("Peak crash hour", peak_text, f"{peak_count:,} crashes at this hour"),
+    ("Busiest weekday", weekday_text, weekday_note),
+    ("Highest-count roadway", top_road, f"{top_road_count:,} crashes"),
+]
+insight_cols = st.columns(3, gap="medium")
+for column, (label, value, note) in zip(insight_cols, facts):
+    with column:
+        st.markdown(
+            '<div class="stat"><div class="stat-label">' + html.escape(label) + '</div>'
+            '<div class="stat-value">' + html.escape(str(value)) + '</div>'
+            '<div class="stat-note">' + html.escape(note) + '</div></div>',
+            unsafe_allow_html=True,
         )
-        + '<div class="facts-note">Counts of reported crashes, not risk: they don\'t account for '
-          'traffic volume or road length.</div></div>',
-        unsafe_allow_html=True,
-    )
+st.caption("Counts reflect reported crashes, not traffic-adjusted risk or road length.")
 
 SECTION_NAMES = (["Dallas vs. Fort Worth"] if city_choice == BOTH_LABEL else []) + [
     "When crashes happen", "Streets & road types", "Year comparison",
