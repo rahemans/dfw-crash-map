@@ -1,0 +1,8 @@
+// This is a requirements file for a Python project. It lists the dependencies needed to run the project. 
+// The listed packages are:
+streamlit
+pandas
+numpy
+plotly
+pydeck
+pyarrow
