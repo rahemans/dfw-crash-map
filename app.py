@@ -38,12 +38,8 @@ BOTH_LABEL = "Dallas + Fort Worth"
 CACHE_VERSION = 2  # bump whenever clean() changes so the cached Parquet file is rebuilt
 PARQUET_PATH = DATA_DIR / f"dfw_crashes_clean_v{CACHE_VERSION}.parquet"  # auto-generated cache
 
-# Starting camera per selection: (latitude, longitude, zoom)
-CITY_VIEWS = {
-    "Dallas": (32.7767, -96.7970, 11.5),
-    "Fort Worth": (32.7555, -97.3308, 11.2),
-    BOTH_LABEL: (32.77, -97.06, 9.7),
-}
+MAP_HEIGHT = 480            # height of the embedded map in px
+MAP_FIT_SIZE = (660, 480)   # visible map size (px) assumed when choosing the starting zoom
 # Bounding box covering both cities, used to drop mis-geocoded points on the map.
 MAP_LAT_RANGE = (32.4, 33.2)
 MAP_LON_RANGE = (-97.7, -96.3)
@@ -76,13 +72,37 @@ SEVERITY_RGB = {
 st.markdown(
     """
 <style>
-.block-container {max-width: 1360px; padding-top: 1.65rem; padding-bottom: 2.75rem;}
+/* Tighter page: less side padding, no oversized title/section gaps. */
+.block-container {max-width: 1360px; padding: 3rem 2rem 2.5rem 2rem;}
 h1, h2, h3 {letter-spacing: -.035em; font-weight: 620;}
-h1 {font-size: 2.4rem !important; margin-bottom: .15rem !important;}
-h3 {font-size: 1.3rem !important;}
-[data-testid="stMetric"] {padding: .8rem .9rem; border: 1px solid rgba(150,160,175,.25); border-radius: 5px;}
-[data-testid="stMetricValue"] {font-size: 1.7rem; letter-spacing: -.035em;}
-hr {margin: 1.4rem 0 !important;}
+h1 {font-size: 2.3rem !important; padding: 0 0 .1rem 0 !important; margin: 0 !important;}
+h3 {font-size: 1.25rem !important; padding: .2rem 0 .4rem 0 !important;}
+[data-testid="stMetric"] {padding: .5rem .8rem; border: 1px solid rgba(150,160,175,.25); border-radius: 5px;}
+[data-testid="stMetricValue"] {font-size: 1.5rem; letter-spacing: -.035em;}
+.stat {padding: .5rem 0; border-top: 1px solid rgba(150,160,175,.25);}
+.stat-label, .stat-note {font-size: .8rem; opacity: .7; line-height: 1.35;}
+.stat-value {font-size: 1.05rem; font-weight: 650; line-height: 1.3;}
+hr {margin: .9rem 0 !important;}
+/* Compact sidebar: shrink the empty header strip and the gaps between groups. */
+/* Collapse button: moved from the top strip to the sidebar's bottom corner (always visible). */
+[data-testid="stSidebar"] {position: relative;}
+[data-testid="stSidebarHeader"] {
+    position: absolute !important; top: auto !important; left: auto !important;
+    bottom: .5rem !important; right: .5rem !important;
+    width: 2.6rem !important; height: 2.6rem !important; min-height: 0 !important;
+    padding: 0 !important; margin: 0 !important; z-index: 100 !important;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    border-radius: .5rem; background: rgba(150,160,175,.18); backdrop-filter: blur(4px);
+}
+[data-testid="stSidebarCollapseButton"], [data-testid="stSidebarCollapseButton"] button {
+    opacity: 1 !important; visibility: visible !important;
+}
+[data-testid="stSidebarUserContent"] {padding-top: .9rem; padding-bottom: 3.4rem;}
+[data-testid="stSidebar"] hr {margin: .55rem 0 !important;}
+[data-testid="stSidebar"] h3 {font-size: 1.05rem !important; padding: 0 0 .2rem 0 !important;}
+.sidebar-brand {margin: 0 0 .6rem 0; padding: 0;}
+.sidebar-brand-title {font-size: 1.22rem; font-weight: 700; letter-spacing: -.025em; line-height: 1.3;}
+.sidebar-brand-subtitle {font-size: .89rem; opacity: .65; margin-top: .25rem; line-height: 1.4;}
 /* Make tabs obvious: larger, bold, boxed. */
 [data-baseweb="tab-list"] {gap: .5rem;}
 button[data-baseweb="tab"] {height: auto; padding: .6rem 1.1rem; border-radius: 6px 6px 0 0; background: rgba(150,160,175,.12);}
@@ -456,9 +476,13 @@ first_dates, last_dates, complete_years = compute_year_bounds(df)
 # Sidebar filters
 # --------------------------------------------------
 with st.sidebar:
-    st.title("DFW Crash Map")
-    st.caption("DALLAS–FORT WORTH / CRASH ANALYTICS")
-    st.divider()
+    st.markdown(
+        """<div class="sidebar-brand">
+          <div class="sidebar-brand-title">DFW Crash Map</div>
+          <div class="sidebar-brand-subtitle">Dallas · Fort Worth, Texas</div>
+        </div>""",
+        unsafe_allow_html=True,
+    )
     st.subheader("Filters")
     st.selectbox("City", CITY_CHOICES, key="city")
     selected_year = st.selectbox("Crash year", years, key="year")
@@ -472,20 +496,18 @@ with st.sidebar:
     for key, options in [("f_weather", weather_options), ("f_roads", road_options), ("f_periods", period_options)]:
         st.session_state[key] = [v for v in st.session_state.get(key, []) if v in options]
 
-    st.button("Reset filters", on_click=reset_filters, width="stretch")
-    st.caption("Leave a filter empty to include all values.")
     selected_weather = st.multiselect("Weather conditions", weather_options, format_func=weather_label,
                                       key="f_weather", placeholder="All conditions")
     selected_roads = st.multiselect("Road types", road_options, format_func=road_label,
                                     key="f_roads", placeholder="All road types")
     selected_periods = st.multiselect("Time of day", period_options,
                                       key="f_periods", placeholder="All times")
+    st.button("Reset filters", on_click=reset_filters, width="stretch")
 
     st.divider()
     layout_mode = st.radio("Page layout", ["Single page", "Tabs"], horizontal=True, key="layout",
                            help="Single page shows every section in one scroll. Tabs show one section at a time.")
 
-    st.divider()
     st.caption(f"Source: TxDOT CRIS · {region_name}")
     partial_years = [y for y in years if y not in complete_years]
     for y in partial_years:
@@ -512,80 +534,201 @@ else:
 all_years_filtered = apply_filters(df, None, weather, roads, periods, include_year=False)
 
 # --------------------------------------------------
+# Map
+# --------------------------------------------------
+def fit_view(lat, lon, margin=1.12, size=MAP_FIT_SIZE):
+    """Pick a camera that frames the crashes being shown.
+
+    Uses the 1st-99th percentile so a few stray points don't zoom the map out, and deck.gl's
+    512-px world size. `size` is the map size (px) the framing is guaranteed to fit.
+    """
+    lo_lat, hi_lat = np.percentile(lat, [1, 99])
+    lo_lon, hi_lon = np.percentile(lon, [1, 99])
+
+    def mercator(deg):
+        return np.log(np.tan(np.pi / 4 + np.radians(deg) / 2))
+
+    x_fraction = max(hi_lon - lo_lon, 0.02) * margin / 360
+    y_fraction = max(abs(mercator(hi_lat) - mercator(lo_lat)), 0.0004) * margin / (2 * np.pi)
+    zoom = min(np.log2(size[0] / (512 * x_fraction)), np.log2(size[1] / (512 * y_fraction)))
+    return float((lo_lat + hi_lat) / 2), float((lo_lon + hi_lon) / 2), float(np.clip(zoom, 8, 14))
+
+
+# The map lives in a nested iframe so the Reset button can reload it (which restores the camera).
+MAP_EMBED_TEMPLATE = """
+<!doctype html>
+<html>
+<head>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0e1117;
+                 font-family: Arial, sans-serif; }
+    body { position: relative; }
+    iframe { display: block; width: 100%; height: 100%; border: 0; }
+    .reset { position: absolute; top: 10px; right: 10px; z-index: 5; background: rgba(32,41,56,.92);
+             color: #e7edf6; border: 1px solid #526073; border-radius: 5px; padding: 6px 12px;
+             cursor: pointer; font-size: 13px; }
+    .reset:hover { background: #304057; }
+    .legend { position: absolute; left: 10px; bottom: 10px; z-index: 5; display: flex; gap: 14px;
+              background: rgba(14,17,23,.85); color: #d5dce6; border-radius: 5px; padding: 6px 11px;
+              font-size: 12px; pointer-events: none; }
+    .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+  </style>
+</head>
+<body>
+  <iframe id="crash-map" title="Crash map" srcdoc="__DECK__"></iframe>
+  <button class="reset" type="button" onclick="resetView()">Reset map view</button>
+  __LEGEND__
+  <script>
+    function resetView() {
+      const frame = document.getElementById('crash-map');
+      frame.srcdoc = frame.srcdoc;
+    }
+  </script>
+</body>
+</html>
+"""
+
+
+@st.cache_data(show_spinner=False, max_entries=16)
+def build_map(_data, city, year, weather, roads, periods, severity, map_style):
+    """Builds the full map HTML once per unique selection, so unrelated reruns reuse it."""
+    coords = map_data(_data, city, year, weather, roads, periods, severity)
+    if coords.empty:
+        return None
+
+    legend = ""
+    if map_style == "Hotspot Heatmap":
+        points = heatmap_cells(coords)
+        layer = pdk.Layer("HeatmapLayer", data=points, get_position="[lon, lat]",
+                          get_weight="weight", radius_pixels=35, opacity=0.7)
+        caption = (f"{len(coords):,} geocoded crashes shown as {len(points):,} weighted grid cells. "
+                   "Hotspots show where reported crashes concentrate, not risk per driver or mile.")
+        tooltip = None
+    else:
+        points = coords.sample(n=MAX_SCATTER_POINTS, random_state=42) if len(coords) > MAX_SCATTER_POINTS else coords
+        layer = pdk.Layer(
+            "ScatterplotLayer", data=points, get_position="[lon, lat]",
+            get_radius=25, radius_min_pixels=2, get_fill_color="[r, g, b, 170]",
+            pickable=True, auto_highlight=True,
+        )
+        caption = (f"Showing {len(points):,} of {len(coords):,} geocoded crashes (sampled only when there are many). "
+                   "Hover a point for details. Concentration is not risk per driver or mile.")
+        tooltip = {"html": "<b>{Street}</b><br/>{Date}<br/>{Severity}"}
+        legend = '<div class="legend">' + "".join(
+            f'<span><i style="background: rgb({r},{g},{b})"></i>{label}</span>'
+            for label, (r, g, b) in SEVERITY_RGB.items()
+        ) + "</div>"
+
+    view_lat, view_lon, view_zoom = fit_view(coords["lat"].to_numpy(), coords["lon"].to_numpy())
+    deck_kwargs = dict(
+        layers=[layer],
+        initial_view_state=pdk.ViewState(latitude=view_lat, longitude=view_lon, zoom=view_zoom, pitch=0),
+        map_style="dark",
+    )
+    if tooltip:  # passing tooltip=None can break the embedded map, so only set it when needed
+        deck_kwargs["tooltip"] = tooltip
+    deck = pdk.Deck(**deck_kwargs)
+    escaped_deck_html = html.escape(deck.to_html(as_string=True, notebook_display=False), quote=True)
+    embed = MAP_EMBED_TEMPLATE.replace("__DECK__", escaped_deck_html).replace("__LEGEND__", legend)
+    return embed.strip(), caption
+
+
+@st.fragment
+def render_map(data, city, year, weather, roads, periods):
+    """Runs as a fragment: changing the map options reruns only this function, not the whole page."""
+    left, right = st.columns([3, 2])
+    severity = left.radio("Show crashes", ["All Crashes", "Injury Crashes", "Fatal Crashes"],
+                          format_func=lambda v: v.replace(" Crashes", ""), horizontal=True,
+                          label_visibility="collapsed", key="map_severity",
+                          help="Which crashes to show on the map: all, injury crashes, or fatal crashes.")
+    map_style = right.radio("Map visualization", ["Hotspot Heatmap", "Individual Crashes"],
+                            format_func=lambda v: {"Hotspot Heatmap": "Heatmap", "Individual Crashes": "Points"}[v],
+                            horizontal=True, label_visibility="collapsed", key="map_style",
+                            help="Heatmap shows concentration; Points shows individual crashes colored by severity.")
+
+    result = build_map(data, city, year, weather, roads, periods, severity, map_style)
+    if result is None:
+        st.info("No valid crash coordinates match these filters.")
+        return
+    map_embed, caption = result
+    if hasattr(st, "iframe"):  # st.components.v1.html is deprecated in recent Streamlit releases
+        st.iframe(map_embed, height=MAP_HEIGHT)
+    else:
+        components.html(map_embed, height=MAP_HEIGHT, scrolling=False)
+    st.caption(caption)
+
+
+# --------------------------------------------------
 # Header and overview metrics
 # --------------------------------------------------
 st.title("DFW Crash Map")
-st.caption(f"{region_name.upper()}  /  TRANSPORTATION DATA")
-st.write(f"Explore reported crashes across {region_name} by time, roadway, severity, and location.")
-st.divider()
-
-st.subheader("Traffic overview")
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Reported crashes", f"{len(filtered):,}")
-c2.metric("Crashes with injuries", f"{int(filtered['Injury Crash'].sum()):,}")
-c3.metric("Fatal crashes", f"{int(filtered['Fatal Crash'].sum()):,}")
-c4.metric("Injury crash share", f"{filtered['Injury Crash'].mean() * 100:.1f}%" if len(filtered) else "—")
-st.caption(f"Showing {selected_year} · All charts use the selected sidebar filters unless labeled otherwise.")
-
+st.caption(f"{region_name} · {selected_year} crash records · every chart follows the sidebar filters")
 if filtered.empty:
     st.warning("No crashes match the current filters. Try removing some filters or choosing another year.")
     st.stop()
 
-SECTION_NAMES = ["Overview", "When crashes happen", "Streets & road types", "Year comparison", "Map"]
-if layout_mode == "Tabs":
-    st.info("Use the tabs below to switch sections. Each one has its own charts. "
-            "Prefer one long page? Change **Page layout** in the sidebar.")
-    tab_overview, tab_time, tab_roads, tab_compare, tab_map = st.tabs(SECTION_NAMES)
+# Quick facts for the selected year and filters.
+valid_hours = filtered["Hour of Day"].dropna()
+peak_hour = int(valid_hours.value_counts().idxmax()) if not valid_hours.empty else None
+peak_count = int((valid_hours == peak_hour).sum()) if peak_hour is not None else 0
+peak_text = hour_label(peak_hour) if peak_hour is not None else "No data"
+
+wk = weekday_table(filtered, selected_year, first_dates, last_dates)
+wk_valid = wk.dropna(subset=["Per day"])
+if not wk_valid.empty and wk_valid["Per day"].max() > 0:
+    top_wk = wk_valid.loc[wk_valid["Per day"].idxmax()]
+    weekday_text, weekday_note = top_wk["Weekday"], f"{top_wk['Per day']:.1f} crashes per {top_wk['Weekday']} on average"
 else:
-    sections = []
-    for index in range(len(SECTION_NAMES)):
-        if index:
-            st.divider()
-        sections.append(st.container())
-    tab_overview, tab_time, tab_roads, tab_compare, tab_map = sections
+    weekday_text, weekday_note = "No data", ""
 
-# --------------------------------------------------
-# Overview: insights
-# --------------------------------------------------
-with tab_overview:
-    st.subheader("Crash insights")
-    st.caption("Quick observations from the currently selected year and filters")
+street_counts = filtered[street_col].dropna().value_counts()
+top_road = street_counts.index[0] if not street_counts.empty else "No data"
+top_road_count = int(street_counts.iloc[0]) if not street_counts.empty else 0
 
-    valid_hours = filtered["Hour of Day"].dropna()
-    peak_hour = int(valid_hours.value_counts().idxmax()) if not valid_hours.empty else None
-    peak_count = int((valid_hours == peak_hour).sum()) if peak_hour is not None else 0
-    peak_text = hour_label(peak_hour) if peak_hour is not None else "No data"
-
-    wk = weekday_table(filtered, selected_year, first_dates, last_dates)
-    wk_valid = wk.dropna(subset=["Per day"])
-    if not wk_valid.empty and wk_valid["Per day"].max() > 0:
-        top_wk = wk_valid.loc[wk_valid["Per day"].idxmax()]
-        weekday_text, weekday_note = top_wk["Weekday"], f"{top_wk['Per day']:.1f} reported crashes per {top_wk['Weekday']}, on average"
-    else:
-        weekday_text, weekday_note = "No data", ""
-
-    street_counts = filtered[street_col].dropna().value_counts()
-    top_road = street_counts.index[0] if not street_counts.empty else "No data"
-    top_road_count = int(street_counts.iloc[0]) if not street_counts.empty else 0
-
-    ia, ib, ic = st.columns(3, gap="medium")
-    with ia:
-        st.metric("Peak crash hour", peak_text)
-        st.caption(f"{peak_count:,} reported crashes at this hour")
-    with ib:
-        st.metric("Busiest weekday (per day)", weekday_text)
-        st.caption(weekday_note)
-    with ic:
-        st.metric("Highest-count roadway", top_road)
-        st.caption(f"{top_road_count:,} reported crashes on this roadway")
-
-    st.caption(
-        "These are counts within the current filters. They do not account for traffic volume or road length, "
-        "so they show where crashes are reported, not where driving is riskiest."
+map_col, stats_col = st.columns([3, 1], gap="medium")
+with map_col:
+    render_map(df, city_choice, selected_year, weather, roads, periods)
+with stats_col:
+    st.metric("Reported crashes", f"{len(filtered):,}")
+    st.metric("Crashes with injuries", f"{int(filtered['Injury Crash'].sum()):,}")
+    st.metric("Fatal crashes", f"{int(filtered['Fatal Crash'].sum()):,}")
+    st.metric("Injury crash share", f"{filtered['Injury Crash'].mean() * 100:.1f}%")
+    facts = [
+        ("Peak crash hour", peak_text, f"{peak_count:,} crashes at this hour"),
+        ("Busiest weekday", weekday_text, weekday_note),
+        ("Highest-count roadway", top_road, f"{top_road_count:,} crashes"),
+    ]
+    st.markdown(
+        "".join(
+            f'<div class="stat"><div class="stat-label">{html.escape(label)}</div>'
+            f'<div class="stat-value">{html.escape(str(value))}</div>'
+            f'<div class="stat-note">{html.escape(note)}</div></div>'
+            for label, value, note in facts
+        ),
+        unsafe_allow_html=True,
     )
+    st.caption("Counts of reported crashes, not risk: they don't account for traffic volume or road length.")
 
-    if city_choice == BOTH_LABEL:
+SECTION_NAMES = (["Dallas vs. Fort Worth"] if city_choice == BOTH_LABEL else []) + [
+    "When crashes happen", "Streets & road types", "Year comparison",
+]
+if layout_mode == "Tabs":
+    containers = st.tabs(SECTION_NAMES)
+else:
+    containers = []
+    for _ in SECTION_NAMES:
         st.divider()
+        containers.append(st.container())
+slots = dict(zip(SECTION_NAMES, containers))
+tab_cities = slots.get("Dallas vs. Fort Worth")
+tab_time, tab_roads, tab_compare = slots["When crashes happen"], slots["Streets & road types"], slots["Year comparison"]
+
+
+# --------------------------------------------------
+# Dallas vs. Fort Worth (only when both cities are shown)
+# --------------------------------------------------
+if tab_cities is not None:
+    with tab_cities:
         st.subheader("Dallas vs. Fort Worth")
         by_city = (
             filtered.groupby("City", observed=True)
@@ -866,106 +1009,6 @@ with tab_compare:
             else:
                 st.caption(f"Percentage change unavailable because the {year_a} baseline is zero.")
             st.caption("Counts reflect reported crashes, not traffic-volume-adjusted risk. Partial years are not offered here.")
-
-# --------------------------------------------------
-# Map
-# --------------------------------------------------
-@st.cache_data(show_spinner=False, max_entries=16)
-def build_map(_data, city, year, weather, roads, periods, severity, map_style):
-    """Builds the full map HTML once per unique selection, so unrelated reruns reuse it."""
-    coords = map_data(_data, city, year, weather, roads, periods, severity)
-    if coords.empty:
-        return None
-
-    if map_style == "Hotspot Heatmap":
-        points = heatmap_cells(coords)
-        layer = pdk.Layer("HeatmapLayer", data=points, get_position="[lon, lat]",
-                          get_weight="weight", radius_pixels=35, opacity=0.7)
-        caption = (f"Representing {len(coords):,} geocoded crash records using {len(points):,} weighted cells. "
-                   "Locations are rounded to a geographic grid.")
-        tooltip = None
-    else:
-        points = coords.sample(n=MAX_SCATTER_POINTS, random_state=42) if len(coords) > MAX_SCATTER_POINTS else coords
-        layer = pdk.Layer(
-            "ScatterplotLayer", data=points, get_position="[lon, lat]",
-            get_radius=25, radius_min_pixels=2, get_fill_color="[r, g, b, 170]",
-            pickable=True, auto_highlight=True,
-        )
-        caption = (f"Showing {len(points):,} of {len(coords):,} geocoded crashes. "
-                   "Individual locations are sampled only when necessary. Hover a point for details.")
-        tooltip = {"html": "<b>{Street}</b><br/>{Date}<br/>{Severity}"}
-
-    view_lat, view_lon, view_zoom = CITY_VIEWS[city]
-    deck_kwargs = dict(
-        layers=[layer],
-        initial_view_state=pdk.ViewState(latitude=view_lat, longitude=view_lon, zoom=view_zoom, pitch=0),
-        map_style="dark",
-    )
-    if tooltip:  # passing tooltip=None can break the embedded map, so only set it when needed
-        deck_kwargs["tooltip"] = tooltip
-    deck = pdk.Deck(**deck_kwargs)
-    # Streamlit's native pydeck widget keeps its camera across reruns, so a Python-side
-    # "reset" can't move it. Embedding the same deck in an iframe lets the Reset button
-    # reload the iframe, which creates a fresh map at the starting camera.
-    escaped_deck_html = html.escape(deck.to_html(as_string=True, notebook_display=False), quote=True)
-    map_embed = f"""
-    <!doctype html>
-    <html>
-    <head>
-      <style>
-        html, body {{ margin: 0; padding: 0; background: #0e1117; color: #d5dce6;
-                     font-family: Arial, sans-serif; }}
-        .toolbar {{ display: flex; align-items: center; justify-content: flex-end;
-                    height: 43px; padding: 0 4px; }}
-        button {{ background: #202938; color: #e7edf6; border: 1px solid #526073;
-                  border-radius: 5px; padding: 7px 13px; cursor: pointer; font-size: 13px; }}
-        button:hover {{ background: #304057; }}
-        iframe {{ display: block; width: 100%; height: 525px; border: 0; }}
-      </style>
-    </head>
-    <body>
-      <div class="toolbar">
-        <button type="button" onclick="resetView()">Reset map view</button>
-      </div>
-      <iframe id="crash-map" title="Crash map" srcdoc="{escaped_deck_html}"></iframe>
-      <script>
-        function resetView() {{
-          const frame = document.getElementById('crash-map');
-          frame.srcdoc = frame.srcdoc;
-        }}
-      </script>
-    </body>
-    </html>
-    """
-    return map_embed.strip(), caption
-
-
-@st.fragment
-def render_map(data, city, year, weather, roads, periods):
-    """Runs as a fragment: changing the map dropdowns reruns only this function, not the whole page."""
-    m1, m2 = st.columns(2)
-    severity = m1.selectbox("Show crashes", ["All Crashes", "Injury Crashes", "Fatal Crashes"])
-    map_style = m2.selectbox("Map visualization", ["Hotspot Heatmap", "Individual Crashes"])
-
-    result = build_map(data, city, year, weather, roads, periods, severity, map_style)
-    if result is None:
-        st.info("No valid crash coordinates match these filters.")
-        return
-    map_embed, caption = result
-    if hasattr(st, "iframe"):  # st.components.v1.html is deprecated in recent Streamlit releases
-        st.iframe(map_embed, height=575)
-    else:
-        components.html(map_embed, height=575, scrolling=False)
-    st.caption(caption)
-    if map_style == "Individual Crashes":
-        st.caption("Colors: blue = no injury reported · amber = injury · red = fatal.")
-    st.caption("Map hotspots represent concentrations of reported crashes, not risk per driver or mile.")
-
-
-with tab_map:
-    st.subheader(f"{region_name} crash map")
-    st.write("Explore where crashes were reported. The heatmap uses weighted geographic cells to reduce rendering load.")
-    render_map(df, city_choice, selected_year, weather, roads, periods)
 
 st.divider()
 st.caption(
