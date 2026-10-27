@@ -1,3 +1,4 @@
+
 # DFW Crash Map
 
 **Explore traffic crash patterns across Dallas and Fort Worth, Texas.**
@@ -16,15 +17,15 @@ That's what led me to create DFW Crash Map.
 
 ## Dashboard preview
 
-### Crash hotspot map
+### Interactive crash map
 
-Visualize geographic concentrations of reported crashes across Dallas and Fort Worth.
+Explore reported traffic crashes across Dallas and Fort Worth using an interactive, color-coded map. Switch between individual crash locations and a hotspot heatmap, filter by severity, and explore how crash patterns vary across different conditions.
 
-![DFW Crash Map — Interactive Heatmap](assets/crash-heatmap.png)
+![DFW Crash Map — Individual Crash Locations](assets/crash-pointmap.png)
 
-### Crash trends
+### Crash trends and analysis
 
-Explore monthly trends, hourly patterns, and weekday crash statistics.
+Explore monthly trends, hourly patterns, and weekday crash statistics. Compare patterns across years and use interactive filters to narrow down the results.
 
 ![DFW Crash Map — Crash Trends](assets/crash-trends.png)
 
@@ -32,7 +33,7 @@ Explore monthly trends, hourly patterns, and weekday crash statistics.
 
 | Explore | What you can do |
 | --- | --- |
-| **Interactive crash map** | Switch between hotspot and individual-crash views, including injury and fatal crashes. |
+| **Interactive crash map** | Switch between hotspot and individual-crash views, including injury and fatal crashes. Points are displayed by default. |
 | **Flexible filters** | Explore Dallas, Fort Worth, or both by year, weather, roadway type, and time of day. |
 | **Crash trends** | Explore monthly, hourly, and weekday patterns, including an hour-by-weekday heatmap. |
 | **City comparisons** | Compare reported crash totals and injury-crash shares for Dallas and Fort Worth. |
@@ -49,14 +50,14 @@ PyArrow supports optional Parquet caching to speed up subsequent data loads.
 
 ## Run locally
 
-**1. Clone the repository**
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/rahemans/dfw-crash-map.git
 cd dfw-crash-map
 ```
 
-**2. Create a virtual environment and install dependencies**
+### 2. Create a virtual environment and install dependencies
 
 On macOS or Linux:
 
@@ -74,7 +75,7 @@ py -m venv .venv
 py -m pip install -r requirements.txt
 ```
 
-**3. Add TxDOT CRIS data**
+### 3. Add TxDOT CRIS data
 
 Place the source CSV exports in the `Data/` directory:
 
@@ -86,17 +87,31 @@ Data/
 
 The `forthworth` spelling matches the path used in `app.py`. Original TxDOT field names must be preserved. The app can load either city independently; both files are needed for combined-city views.
 
-**4. Start the dashboard**
+### 4. Start the dashboard
 
 ```bash
 python3 -m streamlit run app.py
 ```
 
-Open the address shown in your terminal (usually `http://localhost:8501`).
+Open the address shown in your terminal, usually `http://localhost:8501`.
+
+## Testing
+
+The project includes eight automated unit tests covering crash data processing, filtering, date handling, and summary calculations.
+
+Run the test suite using:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+All eight tests passed during the latest dashboard update.
 
 ## Data and interpretation
 
-**Data source:** Texas Department of Transportation, Crash Records Information System (CRIS). The application is configured for 2024–2026 export files; the available dates depend on the actual exports, and the most recent year may be incomplete.
+**Data source:** Texas Department of Transportation, Crash Records Information System (CRIS).
+
+The application is configured for 2024–2026 export files. The available dates depend on the actual exports, and the most recent year may be incomplete.
 
 - Records are cleaned and standardized before analysis, including dates, hours, roadway names, and crash severity.
 - The map includes crashes with valid coordinates within the DFW map bounds. Charts may include crashes that cannot be mapped.
@@ -109,10 +124,14 @@ Open the address shown in your terminal (usually `http://localhost:8501`).
 
 ```text
 dfw-crash-map/
-├── app.py              # Streamlit app, filtering, maps, and charts
-├── Data/               # TxDOT CRIS CSV files
-├── assets/             # README screenshots
-├── requirements.txt    # Python dependencies
+├── app.py                    # Streamlit dashboard, filtering, maps, and charts
+├── Data/                     # TxDOT CRIS CSV files
+├── assets/
+│   ├── crash-pointmap.png    # Interactive crash map screenshot
+│   └── crash-trends.png      # Crash trends screenshot
+├── tests/
+│   └── test_crash_logic.py   # Automated unit tests
+├── requirements.txt          # Python dependencies
 ├── .gitignore
 └── README.md
 ```
