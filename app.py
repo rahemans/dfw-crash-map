@@ -73,10 +73,23 @@ st.markdown(
     """
 <style>
 /* Tighter page: less side padding, no oversized title/section gaps. */
-.block-container {max-width: 1360px; padding: 3rem 2rem 2.5rem 2rem;}
-h1, h2, h3 {letter-spacing: -.035em; font-weight: 620;}
-h1 {font-size: 2.3rem !important; padding: 0 0 .1rem 0 !important; margin: 0 !important;}
-h3 {font-size: 1.25rem !important; padding: .2rem 0 .4rem 0 !important;}
+.block-container {
+    max-width: 1360px;
+    padding: 3rem 2rem 2.5rem 2rem;
+}
+h1, h2, h3 {
+    letter-spacing: -.035em;
+    font-weight: 620;
+}
+h1 {
+    font-size: 2.3rem !important;
+    padding: 0 0 .1rem 0 !important;
+    margin: 0 !important;
+}
+h3 {
+    font-size: 1.25rem !important;
+    padding: .2rem 0 .4rem 0 !important;
+}
 [data-testid="stMetric"] {
     min-height: 128px;
     box-sizing: border-box;
@@ -89,20 +102,61 @@ h3 {font-size: 1.25rem !important; padding: .2rem 0 .4rem 0 !important;}
 }
 /* Larger KPI typography to use the card area, without increasing card height. */
 [data-testid="stMetricLabel"] p,
-[data-testid="stMetricLabel"] {font-size: 1.12rem !important; font-weight: 550 !important; line-height: 1.4 !important;}
+[data-testid="stMetricLabel"] {
+    font-size: 1.12rem !important;
+    font-weight: 550 !important;
+    line-height: 1.4 !important;
+}
 [data-testid="stMetricValue"],
-[data-testid="stMetricValue"] > div {font-size: 2.05rem !important; font-weight: 700 !important; letter-spacing: -.035em; line-height: 1.2 !important;}
-.facts {margin-top: .5rem;}
-.stat {padding: .85rem 0 .8rem; border-top: 1px solid rgba(150,160,175,.22);}
-.stat-label {font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; opacity: .6; margin-bottom: .3rem;}
-.stat-value {font-size: 1.3rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; margin-bottom: .25rem;}
-.stat-note {font-size: .82rem; opacity: .65; line-height: 1.35;}
-.facts-note {font-size: .8rem; opacity: .6; line-height: 1.45; padding-top: .8rem; border-top: 1px solid rgba(150,160,175,.22);}
-hr {margin: .9rem 0 !important;}
+[data-testid="stMetricValue"] > div {
+    font-size: 2.05rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -.035em;
+    line-height: 1.2 !important;
+}
+.facts {
+    margin-top: .5rem;
+}
+.stat {
+    padding: .85rem 0 .8rem;
+    border-top: 1px solid rgba(150,160,175,.22);
+}
+.stat-label {
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    opacity: .6;
+    margin-bottom: .3rem;
+}
+.stat-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+    margin-bottom: .25rem;
+}
+.stat-note {
+    font-size: .82rem;
+    opacity: .65;
+    line-height: 1.35;
+}
+.facts-note {
+    font-size: .8rem;
+    opacity: .6;
+    line-height: 1.45;
+    padding-top: .8rem;
+    border-top: 1px solid rgba(150,160,175,.22);
+}
+hr {
+    margin: .9rem 0 !important;
+}
 /* Compact sidebar: shrink the empty header strip and the gaps between groups. */
 /* Sidebar arrows live in the bottom corners instead of a top strip.
    Collapse arrow: bottom-right of the open sidebar. Expand arrow: bottom-left of the page. */
-[data-testid="stSidebar"] {position: relative;}
+[data-testid="stSidebar"] {
+    position: relative;
+}
 [data-testid="stSidebarHeader"] {
     position: absolute !important; top: auto !important; left: auto !important;
     bottom: .5rem !important; right: .5rem !important;
@@ -125,23 +179,57 @@ button[data-testid="stExpandSidebarButton"] {
     width: 2.6rem !important; height: 2.6rem !important; z-index: 1000 !important;
     border-radius: .5rem; background: rgba(150,160,175,.18); backdrop-filter: blur(4px);
 }
-[data-testid="stSidebarUserContent"] {padding-top: .9rem; padding-bottom: 3.4rem;}
-[data-testid="stSidebar"] hr {margin: .85rem 0 1rem !important;}
-[data-testid="stSidebar"] h3 {font-size: 1.35rem !important; padding: 0 0 .2rem 0 !important;}
+[data-testid="stSidebarUserContent"] {
+    padding-top: .9rem;
+    padding-bottom: 3.4rem;
+}
+[data-testid="stSidebar"] hr {
+    margin: .85rem 0 1rem !important;
+}
+[data-testid="stSidebar"] h3 {
+    font-size: 1.35rem !important;
+    padding: 0 0 .2rem 0 !important;
+}
 /* Slightly larger sidebar filter labels and selected values. */
 [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
-[data-testid="stSidebar"] label p {font-size: 1.25rem !important; font-weight: 600 !important; line-height: 1.45 !important;}
-[data-testid="stSidebar"] [data-baseweb="select"] {font-size: 1.17rem !important;}
+[data-testid="stSidebar"] label p {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    line-height: 1.45 !important;
+}
+[data-testid="stSidebar"] [data-baseweb="select"] {
+    font-size: 1.17rem !important;
+}
 [data-testid="stSidebar"] [data-baseweb="select"] span,
-[data-testid="stSidebar"] [data-baseweb="select"] div {font-size: 1.17rem !important;}
-[data-testid="stSidebar"] [data-testid="stRadio"] p {font-size: 1.12rem !important;}
-[data-testid="stSidebar"] button[kind="secondary"] p {font-size: 1.12rem !important;}
-[data-testid="stSidebar"] [data-baseweb="select"] * {font-size: inherit;}
+[data-testid="stSidebar"] [data-baseweb="select"] div {
+    font-size: 1.17rem !important;
+}
+[data-testid="stSidebar"] [data-testid="stRadio"] p {
+    font-size: 1.12rem !important;
+}
+[data-testid="stSidebar"] button[kind="secondary"] p {
+    font-size: 1.12rem !important;
+}
+[data-testid="stSidebar"] [data-baseweb="select"] * {
+    font-size: inherit;
+}
 /* Make tabs obvious: larger, bold, boxed. */
-[data-baseweb="tab-list"] {gap: .5rem;}
-button[data-baseweb="tab"] {height: auto; padding: .6rem 1.1rem; border-radius: 6px 6px 0 0; background: rgba(150,160,175,.12);}
-button[data-baseweb="tab"] p {font-size: 1.05rem; font-weight: 650;}
-button[data-baseweb="tab"][aria-selected="true"] {background: rgba(109,159,196,.22);}
+[data-baseweb="tab-list"] {
+    gap: .5rem;
+}
+button[data-baseweb="tab"] {
+    height: auto;
+    padding: .6rem 1.1rem;
+    border-radius: 6px 6px 0 0;
+    background: rgba(150,160,175,.12);
+}
+button[data-baseweb="tab"] p {
+    font-size: 1.05rem;
+    font-weight: 650;
+}
+button[data-baseweb="tab"][aria-selected="true"] {
+    background: rgba(109,159,196,.22);
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -245,7 +333,10 @@ def clean(raw):
 
     raw_hours = data["Hour of Day"].astype("string").str.strip()
     numeric_hours = pd.to_numeric(raw_hours, errors="coerce")
-    range_hours = pd.to_numeric(raw_hours.str.extract(r"^(\d{1,2}):\d{2}", expand=False), errors="coerce")
+    range_hours = pd.to_numeric(
+        raw_hours.str.extract(r"^(\d{1,2}):\d{2}", expand=False),
+        errors="coerce",
+    )
     data["Hour of Day"] = numeric_hours.fillna(range_hours)
     data.loc[~data["Hour of Day"].between(0, 23), "Hour of Day"] = float("nan")
 
@@ -253,7 +344,11 @@ def clean(raw):
         data[column] = data[column].fillna("Unknown").astype(str).astype("category")
 
     # Derive weekdays from the date, avoiding inconsistently formatted day labels.
-    data["Weekday"] = pd.Categorical(data["Crash Date"].dt.day_name(), categories=DAY_ORDER, ordered=True)
+    data["Weekday"] = pd.Categorical(
+        data["Crash Date"].dt.day_name(),
+        categories=DAY_ORDER,
+        ordered=True,
+    )
     data["Injury Crash"] = data["Crash Total Injury Count"].gt(0)
     data["Fatal Crash"] = data["Crash Death Count"].gt(0)
 
@@ -656,7 +751,10 @@ def build_map(_data, city, year, weather, roads, periods, severity, map_style):
     if tooltip:  # passing tooltip=None can break the embedded map, so only set it when needed
         deck_kwargs["tooltip"] = tooltip
     deck = pdk.Deck(**deck_kwargs)
-    escaped_deck_html = html.escape(deck.to_html(as_string=True, notebook_display=False), quote=True)
+    escaped_deck_html = html.escape(
+        deck.to_html(as_string=True, notebook_display=False),
+        quote=True,
+    )
     embed = MAP_EMBED_TEMPLATE.replace("__DECK__", escaped_deck_html).replace("__LEGEND__", legend)
     return embed.strip(), caption
 
@@ -882,7 +980,12 @@ with tab_time:
 
     st.divider()
     st.subheader("Day of week")
-    mode = st.radio("Show", ["Average crashes per day", "Total crashes"], horizontal=True, key="weekday_mode")
+    mode = st.radio(
+        "Show",
+        ["Average crashes per day", "Total crashes"],
+        horizontal=True,
+        key="weekday_mode",
+    )
     value_col = "Per day" if mode.startswith("Average") else "Crashes"
     wk_chart = weekday_table(filtered, selected_year, first_dates, last_dates)
     fig = px.bar(wk_chart, x="Weekday", y=value_col, custom_data=["Crashes", "Days in period"])
@@ -913,7 +1016,12 @@ with tab_time:
     )
     fig.update_traces(hovertemplate="<b>%{y}, %{x}</b><br>Crashes: %{z:,}<extra></extra>")
     fig = plot_style(fig, 330)
-    fig.update_xaxes(tickmode="array", tickvals=hour_names[::3], ticktext=hour_names[::3], title=None)
+    fig.update_xaxes(
+        tickmode="array",
+        tickvals=hour_names[::3],
+        ticktext=hour_names[::3],
+        title=None,
+    )
     fig.update_yaxes(title=None)
     fig.update_layout(coloraxis_colorbar=dict(title="Crashes", thickness=12))
     show(fig)
@@ -922,8 +1030,15 @@ with tab_time:
     st.subheader("Severity by hour")
     st.caption(f"Share of reported crashes that involved an injury. Hours with fewer than {MIN_HOUR_SAMPLE} crashes are hidden.")
     sev = filtered.dropna(subset=["Hour of Day"]).assign(Hour=lambda d: d["Hour of Day"].astype(int))
-    sev = sev.groupby("Hour").agg(Crashes=("Hour", "size"), Injury=("Injury Crash", "sum")).reindex(range(24), fill_value=0)
-    sev["Injury share"] = np.where(sev["Crashes"] >= MIN_HOUR_SAMPLE, sev["Injury"] / sev["Crashes"].replace(0, np.nan) * 100, np.nan)
+    sev = sev.groupby("Hour").agg(Crashes=("Hour", "size"), Injury=("Injury Crash", "sum")).reindex(
+        range(24),
+        fill_value=0,
+    )
+    sev["Injury share"] = np.where(
+        sev["Crashes"] >= MIN_HOUR_SAMPLE,
+        sev["Injury"] / sev["Crashes"].replace(0, np.nan) * 100,
+        np.nan,
+    )
     sev = sev.reset_index().rename(columns={"index": "Hour"})
     sev["Label"] = sev["Hour"].map(hour_label)
     fig = px.bar(sev, x="Hour", y="Injury share", custom_data=["Label", "Crashes", "Injury"])
@@ -943,7 +1058,11 @@ with tab_roads:
     st.subheader("Crash-heavy streets")
     st.write("Rank streets by reported crash counts, injury crashes, or fatal crashes. "
              "This is a volume ranking, not a risk-adjusted safety ranking.")
-    rank_by = st.selectbox("Rank streets by", ["Total crashes", "Crashes with injuries", "Fatal crashes"], key="street_rank")
+    rank_by = st.selectbox(
+        "Rank streets by",
+        ["Total crashes", "Crashes with injuries", "Fatal crashes"],
+        key="street_rank",
+    )
     rank_column = {"Total crashes": "Crashes", "Crashes with injuries": "Injury crashes", "Fatal crashes": "Fatal crashes"}[rank_by]
 
     streets = (
@@ -960,12 +1079,22 @@ with tab_roads:
         st.info("No streets with matching records for this ranking and filter selection.")
     else:
         st.markdown(f"**Top 10 · {rank_by.lower()}**")
-        fig = px.bar(top.sort_values(rank_column), x=rank_column, y="Street", orientation="h", text=rank_column)
+        fig = px.bar(
+            top.sort_values(rank_column),
+            x=rank_column,
+            y="Street",
+            orientation="h",
+            text=rank_column,
+        )
         fig.update_traces(hovertemplate="<b>%{y}</b><br>" + rank_by + ": %{x:,}<extra></extra>",
                           textposition="outside", cliponaxis=False)
         fig.update_layout(yaxis_title=None, xaxis_title=rank_by)
         show(plot_style(fig, 410, horizontal=True, color=metric_color(rank_by)))
-        st.dataframe(top[["Street", "Crashes", "Injury crashes", "Fatal crashes"]], hide_index=True, width="stretch")
+        st.dataframe(
+            top[["Street", "Crashes", "Injury crashes", "Fatal crashes"]],
+            hide_index=True,
+            width="stretch",
+        )
         st.download_button(
             "Download full ranking (CSV)",
             ranked[["Street", "Crashes", "Injury crashes", "Fatal crashes"]].to_csv(index=False).encode("utf-8"),
@@ -985,13 +1114,23 @@ with tab_roads:
     left, right = st.columns(2, gap="large")
     with left:
         st.markdown("**Crashes by road type**")
-        fig = px.bar(road_counts.sort_values("Crashes"), x="Crashes", y="Road type", orientation="h")
+        fig = px.bar(
+            road_counts.sort_values("Crashes"),
+            x="Crashes",
+            y="Road type",
+            orientation="h",
+        )
         fig.update_traces(hovertemplate="<b>%{y}</b><br>Crashes: %{x:,}<extra></extra>")
         fig.update_yaxes(title=None)
         show(plot_style(fig, 390, horizontal=True))
     with right:
         st.markdown("**Injury crash share by road type**")
-        fig = px.bar(road_counts.sort_values("Injury share"), x="Injury share", y="Road type", orientation="h")
+        fig = px.bar(
+            road_counts.sort_values("Injury share"),
+            x="Injury share",
+            y="Road type",
+            orientation="h",
+        )
         fig.update_traces(hovertemplate="<b>%{y}</b><br>Injury crash share: %{x:.1f}%<extra></extra>")
         fig.update_xaxes(title="Share of reported crashes (%)")
         fig.update_yaxes(title=None)
@@ -1007,8 +1146,18 @@ with tab_compare:
     else:
         st.write("Compare two complete calendar years using the weather, road, and time filters selected in the sidebar.")
         ca, cb = st.columns(2)
-        year_a = ca.selectbox("Baseline year", complete_years, index=len(complete_years) - 2, key="cmp_a")
-        year_b = cb.selectbox("Comparison year", complete_years, index=len(complete_years) - 1, key="cmp_b")
+        year_a = ca.selectbox(
+            "Baseline year",
+            complete_years,
+            index=len(complete_years) - 2,
+            key="cmp_a",
+        )
+        year_b = cb.selectbox(
+            "Comparison year",
+            complete_years,
+            index=len(complete_years) - 1,
+            key="cmp_b",
+        )
         if year_a == year_b:
             st.info("Choose two different years.")
         else:
@@ -1039,7 +1188,12 @@ with tab_compare:
             new_count = int(summary.loc[year_b, metric_column])
             if old_count:
                 delta = (new_count - old_count) / old_count * 100
-                st.metric(f"{year_b} vs. {year_a} · {compare_metric.lower()}", f"{new_count:,}", f"{delta:+.1f}%", delta_color="off")
+                st.metric(
+                    f"{year_b} vs. {year_a} · {compare_metric.lower()}",
+                    f"{new_count:,}",
+                    f"{delta:+.1f}%",
+                    delta_color="off",
+                )
                 if new_count == old_count:
                     st.caption(f"**Annual insight:** {compare_metric} were unchanged between {year_a} and {year_b} under the selected filters.")
                 else:
