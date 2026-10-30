@@ -7,6 +7,7 @@ Needs:     streamlit (recent), pandas, plotly, pydeck, numpy, pyarrow (optional,
 from __future__ import annotations
 
 import html
+import json
 import re
 from pathlib import Path
 
@@ -677,6 +678,63 @@ def fit_view(lat, lon, margin=1.12, size=MAP_FIT_SIZE):
     return float((lo_lat + hi_lat) / 2), float((lo_lon + hi_lon) / 2), float(np.clip(zoom, 8, 14))
 
 
+# Camera memory. Streamlit replaces the whole map document whenever a map option changes
+# (All/Injury/Fatal, Heatmap/Points, a sidebar filter), which would normally snap the map back
+# to its starting view. The embedding page's `window.name` survives that swap (a full page
+# reload clears it), so the map saves its camera there whenever the user moves it and restores
+# it on load. "Reset map view" clears it. A saved camera is only reused for the same
+# `context` (the selected city), so switching city re-frames the map.
+CAMERA_RESTORE_JS = """
+    const MAP_CONTEXT = __CONTEXT__;
+    const MAP_STORE = 'dfwmap:';
+    try {
+      const raw = window.parent.name || '';
+      if (raw.indexOf(MAP_STORE) === 0) {
+        const saved = JSON.parse(raw.slice(MAP_STORE.length));
+        if (saved && saved.ctx === MAP_CONTEXT && saved.view) {
+          Object.assign(jsonInput.initialViewState, saved.view);
+        }
+      }
+    } catch (e) {}
+    const mapStart = Object.assign({}, jsonInput.initialViewState);
+
+"""
+CAMERA_CAPTURE_JS = """
+    (function () {
+      let lastSaved = '';
+      function remember() {
+        try {
+          const vp = deckInstance.getViewports()[0];
+          if (!vp) return;
+          const view = {latitude: vp.latitude, longitude: vp.longitude, zoom: vp.zoom,
+                        pitch: vp.pitch || 0, bearing: vp.bearing || 0};
+          const moved = Math.abs(view.latitude - mapStart.latitude) > 1e-7 ||
+                        Math.abs(view.longitude - mapStart.longitude) > 1e-7 ||
+                        Math.abs(view.zoom - mapStart.zoom) > 1e-7;
+          if (!moved) return;  // only remember a camera the user actually moved
+          const text = JSON.stringify(view);
+          if (text === lastSaved) return;
+          lastSaved = text;
+          window.parent.name = MAP_STORE + JSON.stringify({ctx: MAP_CONTEXT, view: view});
+        } catch (e) {}
+      }
+      setInterval(remember, 250);
+      window.addEventListener('pagehide', remember);
+    })();
+"""
+
+
+def remember_camera(deck_html, context):
+    """Add the camera-memory scripts to pydeck's generated page (see note above)."""
+    marker = "const deckInstance = createDeck("
+    if marker not in deck_html or "</script>" not in deck_html:
+        return deck_html  # unfamiliar pydeck template: leave the map exactly as pydeck made it
+    restore = CAMERA_RESTORE_JS.replace("__CONTEXT__", json.dumps(context))
+    deck_html = deck_html.replace(marker, restore + "    " + marker, 1)
+    end = deck_html.rindex("</script>")
+    return deck_html[:end] + CAMERA_CAPTURE_JS + "  " + deck_html[end:]
+
+
 # The map lives in a nested iframe so the Reset button can reload it (which restores the camera).
 MAP_EMBED_TEMPLATE = """
 <!doctype html>
@@ -702,7 +760,9 @@ MAP_EMBED_TEMPLATE = """
   <button class="reset" type="button" onclick="resetView()">Reset map view</button>
   __LEGEND__
   <script>
+    // The only thing that returns the map to its starting view: forget the saved camera, reload.
     function resetView() {
+      try { window.name = ''; } catch (e) {}
       const frame = document.getElementById('crash-map');
       frame.srcdoc = frame.srcdoc;
     }
@@ -751,10 +811,8 @@ def build_map(_data, city, year, weather, roads, periods, severity, map_style):
     if tooltip:  # passing tooltip=None can break the embedded map, so only set it when needed
         deck_kwargs["tooltip"] = tooltip
     deck = pdk.Deck(**deck_kwargs)
-    escaped_deck_html = html.escape(
-        deck.to_html(as_string=True, notebook_display=False),
-        quote=True,
-    )
+    deck_html = remember_camera(deck.to_html(as_string=True, notebook_display=False), city)
+    escaped_deck_html = html.escape(deck_html, quote=True)
     embed = MAP_EMBED_TEMPLATE.replace("__DECK__", escaped_deck_html).replace("__LEGEND__", legend)
     return embed.strip(), caption
 
@@ -775,6 +833,9 @@ def render_map(data, city, year, weather, roads, periods):
         default="Individual Crashes", key="map_style",
         help="Heatmap shows concentration; Points shows individual crashes colored by severity.",
     )
+    # A segmented control can be switched off by clicking the active option; fall back to the defaults.
+    severity = severity or "All Crashes"
+    map_style = map_style or "Individual Crashes"
 
     result = build_map(data, city, year, weather, roads, periods, severity, map_style)
     if result is None:
