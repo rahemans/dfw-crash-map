@@ -1,83 +1,48 @@
+<h1 align="center">DFW Crash Map</h1>
 
-# DFW Crash Map
+<p align="center">Explore where, when, and under what conditions traffic crashes happen across Dallas and Fort Worth.</p>
 
-**Explore traffic crash patterns across Dallas and Fort Worth, Texas.**
+<p align="center">
+  <a href="https://dfw-crash-map-ujqh4w6674qx5pszdlthdb.streamlit.app/">Live dashboard</a>
+  · <a href="https://github.com/rahemans/dfw-crash-map">Source code</a>
+</p>
 
-An interactive dashboard built with Python and Streamlit to explore *where*, *when*, and *under what conditions* traffic crashes are reported. Using Texas Department of Transportation (TxDOT) Crash Records Information System (CRIS) data, the app brings crash locations, trends, severity, and roadway analysis into one place.
+![DFW Crash Map — crash locations in downtown Dallas](assets/crash-mapview.png)
 
-**[Explore the live dashboard](https://dfw-crash-map-ujqh4w6674qx5pszdlthdb.streamlit.app/)** · [View the source code](https://github.com/rahemans/dfw-crash-map)
+## Why I built it
 
-## Why Dallas–Fort Worth?
+Driving around DFW can be an experience, especially during rush hour. I wanted to go beyond complaining about traffic and see what the crash data actually showed.
 
-If you've ever driven around Dallas, you know how crazy the roads can get. Between rush-hour traffic, questionable drivers, and whatever's going on with I-635, driving around DFW is an experience of its own.
+So I built DFW Crash Map using reported crash records from the Texas Department of Transportation (TxDOT).
 
-So instead of just complaining about how bad the traffic is, I got curious about where crashes actually happen and what causes them.
+## What you can explore
 
-That's what led me to create DFW Crash Map.
+- **Crash locations:** Switch between individual crash points and a hotspot heatmap. Filter for crashes involving injuries or fatalities, and inspect reported injury and fatality counts.
+- **Filters:** Explore Dallas, Fort Worth, or both by year, weather, road type, and time of day.
+- **Time patterns:** Compare crashes by month, hour, weekday, and hour-by-weekday combinations.
+- **Roadway patterns:** Explore the streets with the most reported crashes, injury crashes, or fatal crashes, and export rankings as CSV.
+- **City and year comparisons:** Compare reported crash patterns across Dallas and Fort Worth and avoid treating partial-year exports as complete years.
 
-## Dashboard preview
-
-### Interactive crash map
-
-Explore reported traffic crashes across Dallas and Fort Worth using an interactive, color-coded map. Switch between individual crash locations and a hotspot heatmap, filter by severity, and explore how crash patterns vary across different conditions.
-
-![DFW Crash Map — Individual Crash Locations](assets/crash-pointmap.png)
-
-### Crash trends and analysis
-
-Explore monthly trends, hourly patterns, and weekday crash statistics. Compare patterns across years and use interactive filters to narrow down the results.
-
-![DFW Crash Map — Crash Trends](assets/crash-trends.png)
-
-## Features
-
-| Explore | What you can do |
-| --- | --- |
-| **Interactive crash map** | Switch between hotspot and individual-crash views, including injury and fatal crashes. Points are displayed by default. |
-| **Flexible filters** | Explore Dallas, Fort Worth, or both by year, weather, roadway type, and time of day. |
-| **Crash trends** | Explore monthly, hourly, and weekday patterns, including an hour-by-weekday heatmap. |
-| **City comparisons** | Compare reported crash totals and injury-crash shares for Dallas and Fort Worth. |
-| **Roadway analysis** | Rank streets by reported crashes, injury crashes, or fatal crashes; download rankings as CSV. |
-| **Year comparisons** | Compare complete years without treating partial-year data as a full year. |
-
-Selected filters can also be shared through the app's URL.
+![DFW Crash Map — crash trends and charts](assets/crash-trends.png)
 
 ## Built with
 
 **Python** · **Streamlit** · **pandas** · **NumPy** · **Plotly** · **PyDeck**
 
-PyArrow supports optional Parquet caching to speed up subsequent data loads.
+The app cleans TxDOT CRIS exports and uses optional Parquet caching to make repeat loads faster. Map points are sampled when needed for performance, while fatal-crash points are retained.
 
 ## Run locally
-
-### 1. Clone the repository
 
 ```bash
 git clone https://github.com/rahemans/dfw-crash-map.git
 cd dfw-crash-map
-```
-
-### 2. Create a virtual environment and install dependencies
-
-On macOS or Linux:
-
-```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -r requirements.txt
+python3 -m streamlit run app.py
 ```
 
-On Windows (PowerShell):
-
-```powershell
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-py -m pip install -r requirements.txt
-```
-
-### 3. Add TxDOT CRIS data
-
-Place the source CSV exports in the `Data/` directory:
+You'll need TxDOT CRIS CSV exports in the `Data/` folder, preserving the original field names:
 
 ```text
 Data/
@@ -85,59 +50,23 @@ Data/
 └── forthworth_crashes_2024_2026.csv
 ```
 
-The `forthworth` spelling matches the path used in `app.py`. Original TxDOT field names must be preserved. The app can load either city independently; both files are needed for combined-city views.
+The `forthworth` spelling matches the filename expected by the app. Either city can load independently; both files are needed for combined views. On Windows, activate the virtual environment with `.venv\Scripts\Activate.ps1` instead.
 
-### 4. Start the dashboard
-
-```bash
-python3 -m streamlit run app.py
-```
-
-Open the address shown in your terminal, usually `http://localhost:8501`.
-
-## Testing
-
-The project includes eight automated unit tests covering crash data processing, filtering, date handling, and summary calculations.
-
-Run the test suite using:
+### Tests
 
 ```bash
-python3 -m unittest discover -s tests -v
+python3 -m pip install pytest
+python3 -m pytest -q tests/test_crash_logic.py
 ```
 
-All eight tests passed during the latest dashboard update.
+## About the data
 
-## Data and interpretation
+**Source:** Texas Department of Transportation, Crash Records Information System (CRIS), configured for 2024–2026 exports. The latest year may be incomplete.
 
-**Data source:** Texas Department of Transportation, Crash Records Information System (CRIS).
+The map shows records with usable coordinates; other charts may include records without map locations. Injury and fatal crash categories can overlap. Individual points may be sampled for performance, but fatal-crash points are retained.
 
-The application is configured for 2024–2026 export files. The available dates depend on the actual exports, and the most recent year may be incomplete.
-
-- Records are cleaned and standardized before analysis, including dates, hours, roadway names, and crash severity.
-- The map includes crashes with valid coordinates within the DFW map bounds. Charts may include crashes that cannot be mapped.
-- The hotspot visualization groups nearby crash locations into geographic cells. The individual-crash layer may sample points for rendering performance.
-- Counts are **not** adjusted for traffic volume, mileage driven, roadway length, or reporting differences.
-
-> **Important:** This dashboard describes historical **reported crashes**, not the likelihood of a future crash. It does not predict crashes, determine fault, or rank roads or cities by risk.
-
-## Project files
-
-```text
-dfw-crash-map/
-├── app.py                    # Streamlit dashboard, filtering, maps, and charts
-├── Data/                     # TxDOT CRIS CSV files
-├── assets/
-│   ├── crash-pointmap.png    # Interactive crash map screenshot
-│   └── crash-trends.png      # Crash trends screenshot
-├── tests/
-│   └── test_crash_logic.py   # Automated unit tests
-├── requirements.txt          # Python dependencies
-├── .gitignore
-└── README.md
-```
-
-Generated Parquet files are local caches. Check TxDOT's redistribution terms before publishing source datasets.
+**Reported crash counts are not traffic-adjusted risk.** A road with more recorded crashes is not necessarily more dangerous per driver, mile, or trip. The dashboard does not predict crashes or determine fault.
 
 ---
 
-*Independent student data science project. Not affiliated with or endorsed by TxDOT.*
+<sub>Independent student data science project. Not affiliated with or endorsed by TxDOT.</sub>
