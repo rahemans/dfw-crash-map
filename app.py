@@ -19,6 +19,8 @@ import pydeck as pdk
 import streamlit as st
 import streamlit.components.v1 as components
 
+from crash_logic import compute_year_bounds, sample_crash_points
+
 # --------------------------------------------------
 # Configuration
 # --------------------------------------------------
@@ -405,22 +407,6 @@ def load_data(signature):
     return data
 
 
-def compute_year_bounds(data):
-    """First/last crash date per year, plus which years are fully covered.
-
-    With several cities, a year only counts as covered up to the *earliest* city cutoff,
-    so a day that one city has and the other doesn't is never treated as a complete day.
-    """
-    dated = data.dropna(subset=["Crash Date", "Crash Year"])
-    per_city = dated.groupby(["Crash Year", "City"], observed=True)["Crash Date"].agg(["min", "max"])
-    first, last, complete = {}, {}, []
-    for year, rows in per_city.groupby(level=0):
-        year = int(year)
-        first[year] = rows["min"].max()
-        last[year] = rows["max"].min()
-        if first[year] <= pd.Timestamp(year, 1, 14) and last[year] >= pd.Timestamp(year, 12, 17):
-            complete.append(year)
-    return first, last, sorted(complete)
 
 
 # --------------------------------------------------
@@ -649,9 +635,9 @@ with st.sidebar:
         if city_choice == BOTH_LABEL:
             cutoffs = df.loc[df["Crash Year"] == y].groupby("City", observed=True)["Crash Date"].max()
             parts = "; ".join(f"{city} through {fmt_date(day)}" for city, day in cutoffs.items() if pd.notna(day))
-            st.caption(f"{y} is a partial year: {parts}.")
+            st.caption(f"{y} has partial or unverified calendar coverage: {parts}.")
         elif y in last_dates:
-            st.caption(f"{y} crash records through {fmt_date(last_dates[y])} (partial year).")
+            st.caption(f"{y} crash records through {fmt_date(last_dates[y])} (partial or unverified calendar coverage).")
     st.caption("Map: geocoded crashes only.")
 
 weather = tuple(sorted(selected_weather))
@@ -801,15 +787,12 @@ def build_map(_data, city, year, weather, roads, periods, severity, map_style):
     else:
         # Always retain every fatal crash. Sample nonfatal crashes only when necessary.
         # Draw fatal markers last so nearby nonfatal markers cannot cover them.
-        fatal = coords.loc[coords["Severity"] == "Fatal"]
-        nonfatal = coords.loc[coords["Severity"] != "Fatal"]
-        nonfatal_budget = max(MAX_SCATTER_POINTS - len(fatal), 0)
-        if len(nonfatal) > nonfatal_budget:
-            nonfatal = nonfatal.sample(n=nonfatal_budget, random_state=42)
-        points = pd.concat([nonfatal, fatal], ignore_index=True)
+        points = sample_crash_points(coords, limit=MAX_SCATTER_POINTS)
+        # A slightly larger marker makes fatal crashes easier to distinguish.
+        points["marker_radius"] = np.where(points["Severity"] == "Fatal", 42, 25)
         layer = pdk.Layer(
             "ScatterplotLayer", data=points, get_position="[lon, lat]",
-            get_radius=25, radius_min_pixels=2, get_fill_color="[r, g, b, 170]",
+            get_radius="marker_radius", radius_min_pixels=2, get_fill_color="[r, g, b, 170]",
             pickable=True, auto_highlight=True,
         )
         caption = (f"Showing {len(points):,} of {len(coords):,} geocoded crashes "
@@ -844,7 +827,7 @@ def render_map(data, city, year, weather, roads, periods):
         "Show crashes", ["All Crashes", "Injury Crashes", "Fatal Crashes"],
         format_func=lambda v: v.replace(" Crashes", ""),
         default="All Crashes", key="map_severity",
-        help="Choose all, injury, or fatal crashes to display.",
+        help="Injury means at least one reported injury; Fatal means at least one reported death. A crash may appear in both categories.",
     )
     map_style = right.segmented_control(
         "Map visualization", ["Hotspot Heatmap", "Individual Crashes"],
@@ -909,6 +892,7 @@ with stats_col:
     st.metric("Fatal crashes", f"{int(filtered['Fatal Crash'].sum()):,}")
     st.markdown('<div style="height: 9px"></div>', unsafe_allow_html=True)
     st.metric("Injury crash share", f"{filtered['Injury Crash'].mean() * 100:.1f}%")
+st.caption("Injury and fatal crash counts can overlap when a crash involved both injuries and deaths.")
 # Place quick insights in a compact row beneath the map and KPI cards.
 # This fills the previously empty area under the map without stretching it.
 facts = [
@@ -1222,9 +1206,9 @@ with tab_roads:
 with tab_compare:
     st.subheader("Year comparison")
     if len(complete_years) < 2:
-        st.info("At least two complete calendar years are needed for a comparison.")
+        st.info("At least two years passing the data-coverage check are needed for a comparison.")
     else:
-        st.write("Compare two complete calendar years using the weather, road, and time filters selected in the sidebar.")
+        st.write("Compare two years with near-full calendar coverage using the weather, road, and time filters selected in the sidebar.")
         ca, cb = st.columns(2)
         year_a = ca.selectbox(
             "Baseline year",
@@ -1282,7 +1266,7 @@ with tab_compare:
                                f"under the selected filters ({old_count:,} → {new_count:,}).")
             else:
                 st.caption(f"Percentage change unavailable because the {year_a} baseline is zero.")
-            st.caption("Counts reflect reported crashes, not traffic-volume-adjusted risk. Partial years are not offered here.")
+            st.caption("Counts reflect reported crashes, not traffic-volume-adjusted risk. Years are screened for coverage near both year boundaries, all 12 months, and long data gaps; this does not independently certify the TxDOT exports as complete.")
 
 st.divider()
 st.caption(
