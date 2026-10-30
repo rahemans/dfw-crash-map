@@ -454,7 +454,7 @@ def map_data(_data, city, year, weather, roads, periods, severity):
         subset["Latitude"].between(*MAP_LAT_RANGE) & subset["Longitude"].between(*MAP_LON_RANGE)
     ]
     if subset.empty:
-        return pd.DataFrame(columns=["lat", "lon", "Severity", "Street", "Date", "r", "g", "b"])
+        return pd.DataFrame(columns=["lat", "lon", "Severity", "Street", "Date", "Injuries", "Deaths", "Injury Detail", "Fatality Detail", "r", "g", "b"])
 
     level = np.select(
         [subset["Fatal Crash"].to_numpy(), subset["Injury Crash"].to_numpy()],
@@ -467,7 +467,18 @@ def map_data(_data, city, year, weather, roads, periods, severity):
         "Severity": level,
         "Street": subset["Street Display"].fillna("Unknown").to_numpy(),
         "Date": subset["Crash Date"].dt.strftime("%b %d, %Y").fillna("Unknown date").to_numpy(),
+        "Injuries": subset["Crash Total Injury Count"].to_numpy(),
+        "Deaths": subset["Crash Death Count"].to_numpy(),
     })
+    # Format missing counts explicitly rather than treating missing data as zero.
+    def count_detail(value, singular, plural):
+        if pd.isna(value):
+            return f"{plural.capitalize()}: unknown"
+        count = int(value)
+        return f"{count:,} {singular if count == 1 else plural}"
+
+    out["Injury Detail"] = out["Injuries"].map(lambda n: count_detail(n, "person injured", "people injured"))
+    out["Fatality Detail"] = out["Deaths"].map(lambda n: count_detail(n, "fatality", "fatalities"))
     out["r"] = out["Severity"].map(lambda s: SEVERITY_RGB[s][0])
     out["g"] = out["Severity"].map(lambda s: SEVERITY_RGB[s][1])
     out["b"] = out["Severity"].map(lambda s: SEVERITY_RGB[s][2])
@@ -788,15 +799,23 @@ def build_map(_data, city, year, weather, roads, periods, severity, map_style):
                    "Hotspots show where reported crashes concentrate, not risk per driver or mile.")
         tooltip = None
     else:
-        points = coords.sample(n=MAX_SCATTER_POINTS, random_state=42) if len(coords) > MAX_SCATTER_POINTS else coords
+        # Always retain every fatal crash. Sample nonfatal crashes only when necessary.
+        # Draw fatal markers last so nearby nonfatal markers cannot cover them.
+        fatal = coords.loc[coords["Severity"] == "Fatal"]
+        nonfatal = coords.loc[coords["Severity"] != "Fatal"]
+        nonfatal_budget = max(MAX_SCATTER_POINTS - len(fatal), 0)
+        if len(nonfatal) > nonfatal_budget:
+            nonfatal = nonfatal.sample(n=nonfatal_budget, random_state=42)
+        points = pd.concat([nonfatal, fatal], ignore_index=True)
         layer = pdk.Layer(
             "ScatterplotLayer", data=points, get_position="[lon, lat]",
             get_radius=25, radius_min_pixels=2, get_fill_color="[r, g, b, 170]",
             pickable=True, auto_highlight=True,
         )
-        caption = (f"Showing {len(points):,} of {len(coords):,} geocoded crashes (sampled only when there are many). "
-                   "Hover a point for details. Concentration is not risk per driver or mile.")
-        tooltip = {"html": "<b>{Street}</b><br/>{Date}<br/>{Severity}"}
+        caption = (f"Showing {len(points):,} of {len(coords):,} geocoded crashes "
+                   "(all fatal crashes included; nonfatal crashes sampled when necessary). "
+                   "Hover a point for injury and fatality counts. Concentration is not risk per driver or mile.")
+        tooltip = {"html": "<b>{Street}</b><br/>{Date}<br/>{Severity}<br/>{Injury Detail}<br/>{Fatality Detail}"}
         legend = '<div class="legend">' + "".join(
             f'<span><i style="background: rgb({r},{g},{b})"></i>{label}</span>'
             for label, (r, g, b) in SEVERITY_RGB.items()
