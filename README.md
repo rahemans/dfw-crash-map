@@ -61,7 +61,7 @@ python3 -m pytest -q tests/test_crash_logic.py
 
 ## A note on the data
 
-The app covers the dates available in the 2024–2026 CRIS exports, which may include partial years. Only crashes with usable coordinates appear on the map; charts can include additional records. Injury and fatal crash categories can overlap.
+The app covers the dates available in the 2024–2026 CRIS exports, which may include partial years. Only crashes with usable coordinates appear on the map, and the charts can include additional records. Injury and fatal crash categories can overlap.
 
 **Crash concentration is not the same as risk.** These counts are not adjusted for traffic volume, miles driven, or road length, and the app does not predict future crashes or determine fault.
 
